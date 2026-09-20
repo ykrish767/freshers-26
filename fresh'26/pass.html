@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Your Pass — FRESHERS' DAY '26</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root{
+    --bg:#150F27;
+    --card:#221A3D;
+    --card-edge:#0D0918;
+    --pink:#FF2E92;
+    --cyan:#00E5C7;
+    --mustard:#FFC93C;
+    --ink:#F5F1FF;
+    --ink-dim:#B8AFD6;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:
+      radial-gradient(circle at 15% 10%, rgba(255,46,146,0.12), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(0,229,199,0.10), transparent 40%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Space Grotesk', system-ui, sans-serif;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:32px 16px 60px;
+  }
+
+  .page-head{ text-align:center; margin-bottom:22px; }
+  .page-head h1{
+    font-family:'Press Start 2P', monospace;
+    font-size:15px;
+    color:var(--cyan);
+    margin:0 0 6px;
+  }
+  .page-head p{ color:var(--ink-dim); font-size:13px; margin:0; }
+
+  /* ---- the pass itself (this is what gets captured as PNG) ---- */
+  #passCard{
+    width:100%;
+    max-width:380px;
+    background:linear-gradient(160deg, #2A2050 0%, #1B1436 100%);
+    border:3px solid var(--card-edge);
+    box-shadow:10px 10px 0 var(--card-edge);
+    padding:0;
+    overflow:hidden;
+  }
+
+  .pass-stripe{
+    height:12px;
+    background:repeating-linear-gradient(
+      -45deg,
+      var(--pink) 0 12px,
+      var(--cyan) 12px 24px,
+      var(--mustard) 24px 36px
+    );
+  }
+
+  .pass-top{ padding:22px 24px 18px; }
+  .pass-eyebrow{
+    font-size:10px;
+    letter-spacing:0.14em;
+    color:var(--mustard);
+    font-weight:700;
+    margin:0 0 8px;
+  }
+  .pass-title{
+    font-family:'Press Start 2P', monospace;
+    font-size:18px;
+    line-height:1.6;
+    color:var(--ink);
+    margin:0 0 4px;
+  }
+  .pass-sub{ font-size:12px; color:var(--ink-dim); margin:0; }
+
+  .perforation{
+    position:relative;
+    height:0;
+    border-top:2px dashed #4A3E75;
+    margin:0 24px;
+  }
+  .perforation::before, .perforation::after{
+    content:"";
+    position:absolute;
+    top:-11px;
+    width:22px;
+    height:22px;
+    border-radius:50%;
+    background:var(--bg);
+  }
+  .perforation::before{ left:-34px; }
+  .perforation::after{ right:-34px; }
+
+  .pass-bottom{ padding:20px 24px 26px; }
+  .pass-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    padding:9px 0;
+    border-bottom:1px solid rgba(255,255,255,0.06);
+    gap:12px;
+  }
+  .pass-row:last-child{ border-bottom:none; }
+  .pass-label{
+    font-size:10px;
+    letter-spacing:0.08em;
+    color:var(--ink-dim);
+    white-space:nowrap;
+  }
+  .pass-value{
+    font-size:14px;
+    font-weight:600;
+    color:var(--ink);
+    text-align:right;
+    word-break:break-word;
+  }
+
+  .ticket-badge{
+    margin-top:16px;
+    text-align:center;
+    padding:12px;
+    background:rgba(0,229,199,0.08);
+    border:2px dashed var(--cyan);
+  }
+  .ticket-badge .num{
+    font-family:'Press Start 2P', monospace;
+    font-size:22px;
+    color:var(--cyan);
+    text-shadow:2px 2px 0 var(--pink);
+  }
+  .ticket-badge .cap{
+    font-size:9px;
+    letter-spacing:0.12em;
+    color:var(--ink-dim);
+    margin-top:6px;
+  }
+
+  /* ---- controls (NOT part of the captured pass) ---- */
+  .controls{
+    width:100%;
+    max-width:380px;
+    margin-top:20px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  button.save-btn{
+    padding:15px;
+    background:var(--mustard);
+    border:3px solid var(--card-edge);
+    box-shadow:5px 5px 0 var(--card-edge);
+    color:#241A00;
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:15px;
+    cursor:pointer;
+    transition: transform .08s;
+  }
+  button.save-btn:active{ transform:translate(3px,3px); box-shadow:2px 2px 0 var(--card-edge); }
+  button.save-btn:disabled{ opacity:0.6; cursor:not-allowed; }
+
+  .home-link{
+    text-align:center;
+    color:var(--ink-dim);
+    font-size:13px;
+    text-decoration:underline;
+    cursor:pointer;
+    margin-top:4px;
+  }
+
+  .empty-state{
+    text-align:center;
+    max-width:380px;
+    color:var(--ink-dim);
+    padding:40px 20px;
+  }
+  .empty-state a{ color:var(--cyan); }
+</style>
+</head>
+<body>
+
+<div id="pageContent">
+  <!-- filled by JS -->
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const data = params.has('name') ? {
+    fullName: params.get('name'),
+    regNumber: params.get('reg'),
+    section: params.get('section'),
+    collegeEmail: params.get('email'),
+    ticketId: params.get('ticket')
+  } : null;
+  const container = document.getElementById('pageContent');
+
+  if (!data){
+    container.innerHTML = `
+      <div class="empty-state">
+        <p>No pass found here — you probably haven't registered yet, or opened this page directly.</p>
+        <p><a href="index.html">Go register for FRESHERS' DAY '26 →</a></p>
+      </div>
+    `;
+  } else {
+    container.innerHTML = `
+      <div class="page-head">
+        <h1>YOUR PASS</h1>
+        <p>Screenshot won't cut it — save the real thing below.</p>
+      </div>
+
+      <div id="passCard">
+        <div class="pass-stripe"></div>
+        <div class="pass-top">
+          <p class="pass-eyebrow">ALL ACCESS · FRESHERS' DAY '26</p>
+          <p class="pass-title">BACKSTAGE<br>PASS</p>
+          <p class="pass-sub">Keep this handy at check-in.</p>
+        </div>
+        <div class="perforation"></div>
+        <div class="pass-bottom">
+          <div class="pass-row">
+            <span class="pass-label">NAME</span>
+            <span class="pass-value">${escapeHtml(data.fullName)}</span>
+          </div>
+          <div class="pass-row">
+            <span class="pass-label">REG. NUMBER</span>
+            <span class="pass-value">${escapeHtml(data.regNumber)}</span>
+          </div>
+          <div class="pass-row">
+            <span class="pass-label">SECTION</span>
+            <span class="pass-value">${escapeHtml(data.section)}</span>
+          </div>
+          <div class="pass-row">
+            <span class="pass-label">COLLEGE MAIL</span>
+            <span class="pass-value">${escapeHtml(data.collegeEmail)}</span>
+          </div>
+          <div class="ticket-badge">
+            <div class="num">${escapeHtml(data.ticketId)}</div>
+            <div class="cap">TICKET ID</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="save-btn" id="saveBtn">⬇ SAVE AS PNG</button>
+        <div class="home-link" onclick="window.location.href='index.html'">Back to registration</div>
+      </div>
+    `;
+
+    document.getElementById('saveBtn').addEventListener('click', savePass);
+  }
+
+  function escapeHtml(str){
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/[&<>"']/g, (m) => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[m]));
+  }
+
+  async function savePass(){
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.textContent = "GENERATING...";
+    try {
+      const canvas = await html2canvas(document.getElementById('passCard'), {
+        backgroundColor: null,
+        scale: 3
+      });
+      const link = document.createElement('a');
+      link.download = 'freshers-day-26-pass.png';
+      link.href = canvas.toDataURL('image/png');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err){
+      alert("Couldn't generate the image — try a screenshot instead. (" + err.message + ")");
+    }
+    btn.disabled = false;
+    btn.textContent = "⬇ SAVE AS PNG";
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FRESHERS' DAY '26 — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#150F27; --card:#221A3D; --card-edge:#0D0918;
+    --pink:#FF2E92; --cyan:#00E5C7; --mustard:#FFC93C;
+    --ink:#F5F1FF; --ink-dim:#B8AFD6;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Space Grotesk', system-ui, sans-serif;
+    min-height:100vh; padding:24px 16px 60px;
+  }
+  h1{
+    font-family:'Press Start 2P', monospace;
+    font-size:18px; color:var(--mustard); text-shadow:2px 2px 0 var(--pink);
+    margin:0 0 20px;
+  }
+
+  #gate{ max-width:380px; margin:80px auto 0; text-align:center; }
+  #gate input{
+    width:100%; padding:12px; font-size:15px; margin:16px 0 12px;
+    background:var(--card); border:2px solid #3A2F5C; color:var(--ink); outline:none;
+  }
+  #gate button, .toolbar button, .export-btn{
+    padding:11px 18px; background:var(--cyan); border:3px solid var(--card-edge);
+    box-shadow:4px 4px 0 var(--card-edge); color:#08201C; font-weight:700;
+    font-family:inherit; cursor:pointer;
+  }
+  #gate button:active, .toolbar button:active, .export-btn:active{ transform:translate(2px,2px); box-shadow:2px 2px 0 var(--card-edge); }
+  #gateError{ color:#FF5C5C; font-size:13px; min-height:18px; }
+
+  #dash{ display:none; max-width:900px; margin:0 auto; }
+  .toolbar{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:18px; flex-wrap:wrap; }
+  .count{ color:var(--ink-dim); font-size:14px; }
+  .count b{ color:var(--cyan); font-size:18px; }
+
+  table{ width:100%; border-collapse:collapse; background:var(--card); border:2px solid var(--card-edge); box-shadow:5px 5px 0 var(--card-edge); }
+  th, td{ text-align:left; padding:10px 12px; font-size:13px; border-bottom:1px solid #3A2F5C; }
+  th{ color:var(--cyan); font-size:12px; letter-spacing:0.04em; }
+  tr:last-child td{ border-bottom:none; }
+
+  .empty{ text-align:center; color:var(--ink-dim); padding:60px 0; }
+  .loading{ text-align:center; color:var(--ink-dim); padding:60px 0; }
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <h1 style="text-align:center;">ADMIN ACCESS</h1>
+  <input type="password" id="pw" placeholder="Enter admin password" />
+  <div id="gateError"></div>
+  <button onclick="tryLogin()">UNLOCK</button>
+</div>
+
+<div id="dash">
+  <h1>FRESHERS' DAY '26 — Registrations</h1>
+  <div class="toolbar">
+    <div class="count"><b id="countNum">0</b> registrations so far</div>
+    <button class="export-btn" onclick="exportCSV()">⬇ Export CSV</button>
+  </div>
+  <div id="listArea" class="loading">Loading...</div>
+</div>
+
+<script>
+  // ====== SUPABASE CONFIG — same project as index.html ======
+  const SUPABASE_URL = "https://arkgjlronnsagszmpmtd.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_5K4pfzlfu9yO9GurQbAhOg_9FDxuWOm";
+  // ============================================================
+  const ADMIN_PASSWORD = "freshers2026";
+
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  let allRows = [];
+
+  function tryLogin(){
+    const val = document.getElementById('pw').value;
+    if (val === ADMIN_PASSWORD){
+      sessionStorage.setItem('fd26_admin_ok', '1');
+      document.getElementById('gate').style.display = 'none';
+      document.getElementById('dash').style.display = 'block';
+      loadData();
+    } else {
+      document.getElementById('gateError').textContent = "Wrong password.";
+    }
+  }
+
+  document.getElementById('pw').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') tryLogin();
+  });
+
+  if (sessionStorage.getItem('fd26_admin_ok') === '1'){
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('dash').style.display = 'block';
+    loadData();
+  }
+
+  async function loadData(){
+    const listArea = document.getElementById('listArea');
+    const { data, error } = await db
+      .from('registrations')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error){
+      listArea.innerHTML = '<div class="empty">Failed to load: ' + error.message + '</div>';
+      return;
+    }
+
+    allRows = data || [];
+    document.getElementById('countNum').textContent = allRows.length;
+
+    if (allRows.length === 0){
+      listArea.innerHTML = '<div class="empty">No registrations yet. Share the link!</div>';
+      return;
+    }
+
+    listArea.innerHTML = `
+      <table>
+        <thead>
+          <tr><th>Name</th><th>Reg. Number</th><th>Section</th><th>College Mail ID</th></tr>
+        </thead>
+        <tbody>
+          ${allRows.map(r => `
+            <tr>
+              <td>${escapeHtml(r.full_name)}</td>
+              <td>${escapeHtml(r.reg_number)}</td>
+              <td>${escapeHtml(r.section)}</td>
+              <td>${escapeHtml(r.college_email)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  function escapeHtml(str){
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/[&<>"']/g, (m) => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[m]));
+  }
+
+  function exportCSV(){
+    if (allRows.length === 0) return;
+    const headers = ['id','full_name','reg_number','section','college_email','created_at'];
+    const csvRows = [headers.join(',')];
+    allRows.forEach(r => {
+      const row = headers.map(h => {
+        let val = r[h] === null || r[h] === undefined ? '' : String(r[h]);
+        val = val.replace(/"/g, '""');
+        return `"${val}"`;
+      });
+      csvRows.push(row.join(','));
+    });
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'freshers-day-26-registrations.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+</script>
+</body>
+</html>

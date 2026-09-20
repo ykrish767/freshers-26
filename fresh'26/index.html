@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FRESHERS' DAY '26 — Register</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --bg:#150F27;
+    --card:#221A3D;
+    --card-edge:#0D0918;
+    --pink:#FF2E92;
+    --cyan:#00E5C7;
+    --mustard:#FFC93C;
+    --ink:#F5F1FF;
+    --ink-dim:#B8AFD6;
+    --danger:#FF5C5C;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:
+      radial-gradient(circle at 15% 10%, rgba(255,46,146,0.12), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(0,229,199,0.10), transparent 40%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Space Grotesk', system-ui, sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:32px 16px 64px;
+  }
+  .wrap{ width:100%; max-width:520px; }
+
+  .stripe{
+    height:14px;
+    width:100%;
+    background:repeating-linear-gradient(
+      -45deg,
+      var(--pink) 0 14px,
+      var(--cyan) 14px 28px,
+      var(--mustard) 28px 42px
+    );
+    border:3px solid var(--card-edge);
+    border-bottom:none;
+  }
+
+  .poster{
+    background:var(--card);
+    border:3px solid var(--card-edge);
+    box-shadow: 10px 10px 0 var(--card-edge);
+    padding:28px 24px 32px;
+  }
+
+  .eyebrow{
+    font-size:11px;
+    letter-spacing:0.14em;
+    color:var(--cyan);
+    font-weight:600;
+    margin:0 0 10px;
+  }
+
+  h1{
+    font-family:'Press Start 2P', monospace;
+    font-size:clamp(22px, 7vw, 32px);
+    line-height:1.5;
+    margin:0 0 6px;
+    color:var(--mustard);
+    text-shadow: 3px 3px 0 var(--pink);
+  }
+
+  .sub{
+    color:var(--ink-dim);
+    font-size:15px;
+    margin:0 0 26px;
+    line-height:1.5;
+  }
+
+  .field{ margin-bottom:18px; }
+  label{
+    display:block;
+    font-size:13px;
+    font-weight:600;
+    margin-bottom:6px;
+    color:var(--ink);
+  }
+  label .req{ color:var(--pink); }
+
+  input[type=text], input[type=email]{
+    width:100%;
+    background:var(--bg);
+    border:2px solid #3A2F5C;
+    color:var(--ink);
+    padding:11px 12px;
+    font-family:inherit;
+    font-size:15px;
+    outline:none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  input:focus{
+    border-color:var(--cyan);
+    box-shadow: 3px 3px 0 var(--cyan);
+  }
+
+  button.submit{
+    width:100%;
+    margin-top:8px;
+    padding:15px;
+    background:var(--cyan);
+    border:3px solid var(--card-edge);
+    box-shadow:5px 5px 0 var(--card-edge);
+    color:#08201C;
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:16px;
+    cursor:pointer;
+    transition: transform .08s;
+  }
+  button.submit:active{ transform:translate(3px,3px); box-shadow:2px 2px 0 var(--card-edge); }
+  button.submit:disabled{ opacity:0.6; cursor:not-allowed; }
+
+  .error-box{
+    background:rgba(255,92,92,0.12);
+    border:2px solid var(--danger);
+    color:#FFD4D4;
+    padding:10px 12px;
+    font-size:13px;
+    margin-bottom:16px;
+    display:none;
+  }
+
+  .success{ display:none; text-align:center; padding:20px 4px; }
+  .success .stamp{
+    font-family:'Press Start 2P', monospace;
+    font-size:20px;
+    color:var(--cyan);
+    text-shadow:3px 3px 0 var(--pink);
+    margin-bottom:14px;
+    line-height:1.6;
+  }
+  .success p{ color:var(--ink-dim); font-size:14px; line-height:1.6; }
+  .ticket-id{
+    display:inline-block;
+    margin-top:10px;
+    padding:8px 14px;
+    background:var(--bg);
+    border:2px dashed var(--mustard);
+    color:var(--mustard);
+    font-weight:700;
+    letter-spacing:0.05em;
+  }
+
+  .footer-note{
+    text-align:center;
+    color:var(--ink-dim);
+    font-size:11px;
+    margin-top:18px;
+    opacity:0.7;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="stripe"></div>
+  <div class="poster">
+
+    <p class="eyebrow">DEPT. OF GENETIC ENGINEERING // 2026</p>
+    <h1>FRESHERS'<br>DAY '26</h1>
+    <p class="sub">Rewind to the 90s. Lock in your registration below — takes 20 seconds.</p>
+
+    <div class="error-box" id="errorBox"></div>
+
+    <form id="regForm">
+      <div class="field">
+        <label>Name <span class="req">*</span></label>
+        <input type="text" id="fullName" required />
+      </div>
+
+      <div class="field">
+        <label>Registration Number <span class="req">*</span></label>
+        <input type="text" id="regNumber" required />
+      </div>
+
+      <div class="field">
+        <label>Section <span class="req">*</span></label>
+        <input type="text" id="section" required />
+      </div>
+
+      <div class="field">
+        <label>College Mail ID <span class="req">*</span></label>
+        <input type="email" id="collegeEmail" required />
+      </div>
+
+      <button type="submit" class="submit" id="submitBtn">SUBMIT REGISTRATION</button>
+    </form>
+
+    <div class="success" id="successBox">
+      <div class="stamp">YOU'RE<br>IN! 🎉</div>
+      <p>Registration locked in. Save your ticket ID below — bring it (or a screenshot) on the day of the event.</p>
+      <div class="ticket-id" id="ticketId">#000</div>
+    </div>
+
+  </div>
+  <div class="footer-note">Built for FRESHERS' DAY '26 · questions → your organizers' contact</div>
+</div>
+
+<script>
+  // ====== SUPABASE CONFIG — fill these in from your project settings ======
+  const SUPABASE_URL = "https://arkgjlronnsagszmpmtd.supabase.co";       // e.g. https://xxxx.supabase.co
+  const SUPABASE_ANON_KEY = "sb_publishable_5K4pfzlfu9yO9GurQbAhOg_9FDxuWOm";
+  // ==========================================================================
+
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const form = document.getElementById('regForm');
+  const errorBox = document.getElementById('errorBox');
+  const submitBtn = document.getElementById('submitBtn');
+
+  function showError(msg){
+    errorBox.textContent = msg;
+    errorBox.style.display = 'block';
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorBox.style.display = 'none';
+
+    const fullName = document.getElementById('fullName').value.trim();
+    const regNumber = document.getElementById('regNumber').value.trim();
+    const section = document.getElementById('section').value.trim();
+    const collegeEmail = document.getElementById('collegeEmail').value.trim();
+
+    if (!fullName || !regNumber || !section || !collegeEmail){
+      showError("Fill out all the fields first, bro.");
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = "SUBMITTING...";
+
+    const { data, error } = await db
+      .from('registrations')
+      .insert([{
+        full_name: fullName,
+        reg_number: regNumber,
+        section: section,
+        college_email: collegeEmail
+      }])
+      .select();
+
+    if (error){
+      console.error(error);
+      showError("Something broke on submit — check your internet and try again. (" + error.message + ")");
+      submitBtn.disabled = false;
+      submitBtn.textContent = "SUBMIT REGISTRATION";
+      return;
+    }
+
+    const row = data && data[0];
+    const ticketLabel = row ? ("#" + String(row.id).padStart(3, "0")) : "#—";
+    document.getElementById('ticketId').textContent = ticketLabel;
+    form.style.display = 'none';
+    document.getElementById('successBox').style.display = 'block';
+
+    // Pass this registration's info to pass.html via the URL (more
+    // reliable than sessionStorage when testing over file:// links),
+    // then redirect after a short pause so the success message registers.
+    const passParams = new URLSearchParams({
+      name: fullName, reg: regNumber, section: section, email: collegeEmail, ticket: ticketLabel
+    });
+    setTimeout(() => { window.location.href = 'pass.html?' + passParams.toString(); }, 1600);
+  });
+</script>
+</body>
+</html>
