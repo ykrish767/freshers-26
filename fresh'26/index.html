@@ -230,7 +230,7 @@
     errorBox.style.display = 'none';
 
     const fullName = document.getElementById('fullName').value.trim();
-    const regNumber = document.getElementById('regNumber').value.trim();
+    const regNumber = document.getElementById('regNumber').value.trim().toUpperCase();
     const section = document.getElementById('section').value.trim();
     const collegeEmail = document.getElementById('collegeEmail').value.trim();
 
@@ -240,6 +240,56 @@
     }
 
     submitBtn.disabled = true;
+    submitBtn.textContent = "CHECKING...";
+
+    // Step 1: is this reg number allowed to register?
+    // Any reg number starting with RA2511 is auto-approved, no list check needed.
+    // Everyone else must be on the allowed_students list.
+    let isApproved = regNumber.startsWith("RA2511");
+
+    if (!isApproved){
+      const { data: allowedMatch, error: allowedError } = await db
+        .from('allowed_students')
+        .select('reg_number')
+        .eq('reg_number', regNumber)
+        .maybeSingle();
+
+      if (allowedError){
+        showError("Couldn't verify your registration number — check your internet and try again.");
+        submitBtn.disabled = false;
+        submitBtn.textContent = "SUBMIT REGISTRATION";
+        return;
+      }
+      isApproved = !!allowedMatch;
+    }
+
+    if (!isApproved){
+      showError("This registration number isn't on the approved list. Contact your organizers if you think this is a mistake.");
+      submitBtn.disabled = false;
+      submitBtn.textContent = "SUBMIT REGISTRATION";
+      return;
+    }
+
+    // Step 2: have they already registered?
+    const { data: existing, error: existingError } = await db
+      .from('registrations')
+      .select('id')
+      .eq('reg_number', regNumber)
+      .maybeSingle();
+
+    if (existingError){
+      showError("Couldn't verify your registration status — check your internet and try again.");
+      submitBtn.disabled = false;
+      submitBtn.textContent = "SUBMIT REGISTRATION";
+      return;
+    }
+    if (existing){
+      showError("This registration number has already been used to register. Only one registration per student.");
+      submitBtn.disabled = false;
+      submitBtn.textContent = "SUBMIT REGISTRATION";
+      return;
+    }
+
     submitBtn.textContent = "SUBMITTING...";
 
     const { data, error } = await db

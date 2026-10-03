@@ -49,6 +49,21 @@
   th{ color:var(--cyan); font-size:12px; letter-spacing:0.04em; }
   tr:last-child td{ border-bottom:none; }
 
+  .delete-all-btn{
+    padding:11px 18px; background:transparent; border:3px solid #FF5C5C;
+    box-shadow:4px 4px 0 var(--card-edge); color:#FF5C5C; font-weight:700;
+    font-family:inherit; cursor:pointer;
+  }
+  .delete-all-btn:active{ transform:translate(2px,2px); box-shadow:2px 2px 0 var(--card-edge); }
+  .delete-all-btn:hover{ background:#FF5C5C; color:#1A0B14; }
+
+  .del-btn{
+    padding:6px 12px; font-size:12px; font-weight:700;
+    background:transparent; border:2px solid #FF5C5C; color:#FF5C5C;
+    box-shadow:none; cursor:pointer;
+  }
+  .del-btn:hover{ background:#FF5C5C; color:#1A0B14; }
+
   .empty{ text-align:center; color:var(--ink-dim); padding:60px 0; }
   .loading{ text-align:center; color:var(--ink-dim); padding:60px 0; }
 </style>
@@ -66,7 +81,10 @@
   <h1>FRESHERS' DAY '26 — Registrations</h1>
   <div class="toolbar">
     <div class="count"><b id="countNum">0</b> registrations so far</div>
-    <button class="export-btn" onclick="exportCSV()">⬇ Export CSV</button>
+    <div style="display:flex; gap:10px;">
+      <button class="export-btn" onclick="exportCSV()">⬇ Export CSV</button>
+      <button class="delete-all-btn" onclick="deleteAll()">🗑 Delete All</button>
+    </div>
   </div>
   <div id="listArea" class="loading">Loading...</div>
 </div>
@@ -126,7 +144,7 @@
     listArea.innerHTML = `
       <table>
         <thead>
-          <tr><th>Name</th><th>Reg. Number</th><th>Section</th><th>College Mail ID</th></tr>
+          <tr><th>Name</th><th>Reg. Number</th><th>Section</th><th>College Mail ID</th><th></th></tr>
         </thead>
         <tbody>
           ${allRows.map(r => `
@@ -135,11 +153,51 @@
               <td>${escapeHtml(r.reg_number)}</td>
               <td>${escapeHtml(r.section)}</td>
               <td>${escapeHtml(r.college_email)}</td>
+              <td><button class="del-btn" onclick="deleteRow(${r.id}, '${escapeHtml(r.full_name).replace(/'/g, "\\'")}')">Delete</button></td>
             </tr>
           `).join('')}
         </tbody>
       </table>
     `;
+  }
+
+  async function deleteAll(){
+    if (allRows.length === 0){
+      alert("Nothing to delete — list's already empty.");
+      return;
+    }
+    const typed = prompt(`This will permanently delete ALL ${allRows.length} registrations. This CANNOT be undone.\n\nType DELETE ALL (exactly, in caps) to confirm:`);
+    if (typed !== "DELETE ALL"){
+      if (typed !== null) alert("Didn't match — nothing was deleted.");
+      return;
+    }
+
+    const { error } = await db
+      .from('registrations')
+      .delete()
+      .gte('id', 0);
+
+    if (error){
+      alert("Couldn't delete everything: " + error.message);
+      return;
+    }
+    loadData();
+  }
+
+  async function deleteRow(id, name){
+    const sure = confirm(`Delete ${name}'s registration? This can't be undone.`);
+    if (!sure) return;
+
+    const { error } = await db
+      .from('registrations')
+      .delete()
+      .eq('id', id);
+
+    if (error){
+      alert("Couldn't delete: " + error.message);
+      return;
+    }
+    loadData();
   }
 
   function escapeHtml(str){
